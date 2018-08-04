@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { pluck } from 'rxjs/operators';
+import { pluck, startWith } from 'rxjs/operators';
 
 const CACHE_KEY = 'httpRepoCache';
 
@@ -15,10 +15,17 @@ export class AppComponent {
   constructor(private http: HttpClient) {
     const path = 'https://api.github.com/search/repositories?q=angular';
     this.repos = http.get<any>(path)
-      .pipe(pluck('items'));
+      .pipe(
+        pluck('items')
+      );
 
     this.repos.subscribe(next => {
       localStorage[CACHE_KEY] = JSON.stringify(next);
     });
+
+    // Add extra emit event before HTTP request on repos Observable
+    this.repos = this.repos.pipe(
+      startWith(JSON.parse(localStorage[CACHE_KEY] || '[]'))
+    );
   }
 }
